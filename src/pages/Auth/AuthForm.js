@@ -1,18 +1,59 @@
 import React, { useState } from "react";
+import { login, signup, verifyToken } from "../../services/authService";
+import { useNavigate } from "react-router-dom";
 
 export default function AuthForm({ isSignUp }) {
+  const navigate = useNavigate();
   const [userDetails, setUserDetails] = useState({
     fullName: "",
     email: "",
     password: "",
+    phonenumber: "",
     gender: "male",
-    phoneNumber: "",
     location: "",
   });
 
-  const handleSubmit = (e) => {
+  const handleSignUp = async (e) => {
     e.preventDefault();
-    // Implement your authentication logic here
+    console.log(userDetails);
+    try {
+      const response = await signup(userDetails);
+      if (response.status) {
+        const verifyResponse = await verifyToken();
+        if (verifyResponse.status) {
+          navigate("/home");
+        } else {
+          console.log("Token verification failed");
+        }
+      } else {
+        console.log("signup failed");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    const { email, password } = userDetails;
+    try {
+      const response = await login({ email, password });
+      console.log(response);
+      if (response.status) {
+        const verifyResponse = await verifyToken();
+        if (verifyResponse.status) {
+          navigate("/home");
+        } else {
+          console.log("Token verification failed");
+        }
+      } else {
+        if (response.message) {
+          console.log(response.message);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleChange = (e) => {
@@ -23,11 +64,16 @@ export default function AuthForm({ isSignUp }) {
     }));
   };
 
+  console.log(isSignUp);
+
   return (
     <div className="container">
       <div className="row justify-content-center">
         <div className="col-md-6">
-          <form onSubmit={handleSubmit} className="p-4 bg-light rounded">
+          <form
+            onSubmit={isSignUp ? handleSignUp : handleLogin}
+            className="p-4 bg-light rounded"
+          >
             <h3 className="mb-4">{isSignUp ? "Sign Up" : "Log In"}</h3>
             {isSignUp && (
               <>
@@ -114,9 +160,9 @@ export default function AuthForm({ isSignUp }) {
                   <input
                     type="tel"
                     className="form-control"
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    value={userDetails.phoneNumber}
+                    id="phonenumber"
+                    name="phonenumber"
+                    value={userDetails.phonenumber}
                     onChange={handleChange}
                     required
                   />

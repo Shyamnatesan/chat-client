@@ -3,6 +3,7 @@ import MessageInput from "../MessageInput/MessageInput";
 import MessageDisplay from "../MessageDisplay/MessageDisplay";
 
 export default function ChatWindow({ user }) {
+  console.log(user);
   return (
     <div className="col-6 bg-light p-2 d-flex flex-column">
       <div className="d-flex">
