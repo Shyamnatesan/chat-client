@@ -2,7 +2,7 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 import NewHome from "./pages/NewHome/NewHome";
 import Auth from "./pages/Auth/Auth";
-import NewNavbar from "./components/NewNavbar/NewNavbar";
+import { UserProvider } from "./UserContext";
 
 function App() {
   return (

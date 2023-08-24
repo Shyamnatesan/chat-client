@@ -1,14 +1,35 @@
-import React, { useState } from "react";
-import { searchUsersBySearchText } from "../../services/discoverService";
+import React, { useEffect, useState } from "react";
+import {
+  fetchSentRequests,
+  searchUsersBySearchText,
+  sendFriendRequest,
+} from "../../services/discoverService";
 import SearchBar from "../SearchBar/SearchBar";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGreaterThan, faLessThan } from "@fortawesome/free-solid-svg-icons";
+import Pagination from "../Common/Components/Pagination";
+import { useUserContext } from "../../UserContext";
 
 export default function FindFriends() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]);
   const [page, setPage] = useState(1);
   const usersPerPage = 10; // Number of users to show per page
+  const [totalPages, setTotalPages] = useState(0);
+  const { currentUser } = useUserContext();
+
+  useEffect(() => {
+    async function fetchUserSentRequests() {
+      try {
+        const response = await fetchSentRequests();
+        console.log(response.data);
+        setSentRequests(response.data);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    fetchUserSentRequests();
+  }, []);
 
   const fetchSearchResults = async (searchQuery, page) => {
     try {
@@ -19,6 +40,8 @@ export default function FindFriends() {
       );
       console.log(response.users);
       setSearchResults(response.users);
+      const totalResults = response.totalUsers;
+      setTotalPages(Math.ceil(totalResults / usersPerPage));
     } catch (error) {
       console.error("Error fetching search results:", error);
     }
@@ -35,53 +58,107 @@ export default function FindFriends() {
     }
   };
 
-  const handleNextPage = () => {
-    const nextPage = page + 1;
-    fetchSearchResults(searchQuery, nextPage);
-    setPage(nextPage);
-  };
-
-  const handlePrevPage = () => {
-    if (page > 1) {
-      const prevPage = page - 1;
-      fetchSearchResults(searchQuery, prevPage);
-      setPage(prevPage);
+  const handlePageChange = async (newPage) => {
+    console.log(newPage);
+    setPage(newPage);
+    if (searchQuery.trim() !== "") {
+      fetchSearchResults(searchQuery, newPage);
     }
   };
 
+  const handleAddFriend = async (requestReceiverId) => {
+    try {
+      const response = await sendFriendRequest(requestReceiverId);
+    } catch (error) {
+      console.log("error sending friend request", error);
+    }
+  };
+
+  console.log(searchResults.length);
+  console.log(currentUser);
+
   return (
-    <div className="card">
+    <div className="col card">
       <div className="card-body">
         <SearchBar handleSearch={handleSearch} />
         {searchResults.length > 0 && (
-          <div className="card mt-3">
+          // <div className="card mt-3">
+          <>
             <p className="m-1">Results: </p>
             <hr></hr>
             <div className="card-body">
-              {searchResults.map((user, index) => (
-                <div key={index} className="mb-3">
-                  <h4 className="fw-normal">{user.fullName}</h4>
-                </div>
-              ))}
+              <table className="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Friend Status</th>
+                  </tr>
+                </thead>
+                {/* <tbody>
+                  {searchResults.map((user, index) => (
+                    <tr key={index}>
+                      <td>{user.fullName}</td>
+                      <td>
+                        {user._id !== currentUser._id ? (
+                          sentRequests.includes(user._id) ? (
+                            <span className="badge bg-success">
+                              Request Sent
+                            </span>
+                          ) : (
+                            <button
+                              className="btn btn-primary"
+                              onClick={() => handleAddFriend(user._id)}
+                            >
+                              Add Friend
+                            </button>
+                          )
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody> */}
+                <tbody>
+                  {searchResults.map((user, index) => (
+                    <tr key={index}>
+                      <td>{user.fullName}</td>
+                      <td>
+                        {user._id !== currentUser._id ? (
+                          sentRequests.some(
+                            (request) =>
+                              request.requestReceiverId === user._id &&
+                              request.status === "accepted"
+                          ) ? (
+                            <span className="badge bg-primary">Friends</span>
+                          ) : sentRequests.some(
+                              (request) =>
+                                request.requestReceiverId === user._id &&
+                                request.status === "pending"
+                            ) ? (
+                            <span className="badge bg-success">
+                              Request Sent
+                            </span>
+                          ) : (
+                            <button
+                              className="btn btn-primary"
+                              onClick={() => handleAddFriend(user._id)}
+                            >
+                              Add Friend
+                            </button>
+                          )
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div className="d-flex justify-content-between mt-3">
-              <a
-                className="nav-link py-3 px-2 m-1"
-                onClick={handlePrevPage}
-                disabled={page === 1}
-                style={{ marginRight: "10px" }}
-              >
-                <FontAwesomeIcon icon={faLessThan} />
-              </a>
-              <a
-                className="nav-link py-3 px-2 m-1"
-                onClick={handleNextPage}
-                disabled={searchResults.length < usersPerPage}
-              >
-                <FontAwesomeIcon icon={faGreaterThan} />
-              </a>
-            </div>
-          </div>
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            ></Pagination>
+            {/* </div> */}
+          </>
         )}
       </div>
     </div>

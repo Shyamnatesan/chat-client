@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { login, signup, verifyToken } from "../../services/authService";
 import { useNavigate } from "react-router-dom";
+import { useUserContext } from "../../UserContext";
 
 export default function AuthForm({ isSignUp }) {
   const navigate = useNavigate();
@@ -13,6 +14,8 @@ export default function AuthForm({ isSignUp }) {
     location: "",
   });
 
+  const { setCurrentUser } = useUserContext();
+
   const handleSignUp = async (e) => {
     e.preventDefault();
     console.log(userDetails);
@@ -21,6 +24,7 @@ export default function AuthForm({ isSignUp }) {
       if (response.status) {
         const verifyResponse = await verifyToken();
         if (verifyResponse.status) {
+          setCurrentUser(verifyResponse.user);
           navigate("/home");
         } else {
           console.log("Token verification failed");
@@ -42,6 +46,7 @@ export default function AuthForm({ isSignUp }) {
       if (response.status) {
         const verifyResponse = await verifyToken();
         if (verifyResponse.status) {
+          setCurrentUser(verifyResponse.user);
           navigate("/home");
         } else {
           console.log("Token verification failed");

@@ -46,6 +46,7 @@ export async function login(userDetails) {
     const { status } = data;
 
     if (status) {
+      console.log("token set");
       localStorage.setItem("token", data.token);
       return { status, data };
     } else {
