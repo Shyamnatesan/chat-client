@@ -1,33 +1,23 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import SearchBar from "../SearchBar/SearchBar";
+import { fetchFriendsForUser } from "../../services/homeService";
 
 export default function ChatList({ handleToggleChatWindow }) {
-  let users = [
-    {
-      name: "Leslie Alexander",
-      imageUrl: require("../../assets/Image_created_with_a_mobile_phone.jpg"),
-    },
-    {
-      name: "Guy Hawkins",
-      imageUrl: require("../../assets/Image_created_with_a_mobile_phone.jpg"),
-    },
-    {
-      name: "Jacob Jones",
-      imageUrl: require("../../assets/Image_created_with_a_mobile_phone.jpg"),
-    },
-    {
-      name: "Shyam Natesan",
-      imageUrl: require("../../assets/Image_created_with_a_mobile_phone.jpg"),
-    },
-    {
-      name: "Natesan Ramalingam",
-      imageUrl: require("../../assets/Image_created_with_a_mobile_phone.jpg"),
-    },
-    {
-      name: "Monish Natesan",
-      imageUrl: require("../../assets/Image_created_with_a_mobile_phone.jpg"),
-    },
-  ];
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    async function fetchUserDetails() {
+      try {
+        const response = await fetchFriendsForUser();
+        console.log(response.data);
+        setUsers(response.data);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    fetchUserDetails();
+  }, []);
 
   const handleUserClick = (user) => {
     console.log(user);
@@ -69,7 +59,7 @@ export default function ChatList({ handleToggleChatWindow }) {
                   className="nav-link py-3 px-2"
                   style={{ color: "black" }}
                 >
-                  {user.name}
+                  {user.fullName}
                 </a>
               </li>
             );
