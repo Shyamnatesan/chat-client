@@ -14,9 +14,6 @@ export default function NewHome() {
   const [chatRoomId, setChatRoomId] = useState("");
 
   const handleToggleChatWindow = async (user) => {
-    setShowChatWindow(true);
-    setChatWindowUser(user);
-
     try {
       const response = await fetchRoomId(user);
       if (response.status) {
@@ -25,6 +22,8 @@ export default function NewHome() {
     } catch (error) {
       console.log(error);
     }
+    setShowChatWindow(true);
+    setChatWindowUser(user);
   };
 
   useEffect(() => {
