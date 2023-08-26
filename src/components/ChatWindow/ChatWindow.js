@@ -1,27 +1,54 @@
-import React, { useEffect, useState } from "react";
-import { io } from "socket.io-client";
+import React, { useEffect, useRef, useState } from "react";
 import { faPaperPlane } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { getMessagesByRoomId } from "../../services/messageService";
+import { useUserContext } from "../../UserContext";
 
 export default function ChatWindow({ user, roomId, socket }) {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
+  const messagesContainerRef = useRef(null);
+  const { currentUser } = useUserContext();
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
 
-  useEffect(() => {
-    setMessage("");
-    setMessages([]);
-    socket.emit("joinRoom", roomId); // Join the private room
+  const fetchMessages = async (lastMessageTimestamp) => {
+    if (setHasMoreMessages) {
+      try {
+        const response = await getMessagesByRoomId(
+          roomId,
+          lastMessageTimestamp
+        );
+        if (response.messages.length === 0) {
+          setHasMoreMessages(false);
+        } else {
+          setHasMoreMessages(true);
+          const reversed = [...response.messages].reverse();
+          if (!lastMessageTimestamp) {
+            setMessages((prevMessages) => [...prevMessages, ...reversed]);
+          } else {
+            setMessages((prevMessages) => [...reversed, ...prevMessages]);
+          }
+        }
 
-    const handleNewMessage = (messageData) => {
-      setMessages((prevMessages) => [...prevMessages, messageData]);
-    };
+        console.log("updated message");
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  };
 
-    socket.on("newMessage", handleNewMessage);
+  const handleNewMessage = (messageData) => {
+    setMessages((prevMessages) => [...prevMessages, messageData]);
+    messagesContainerRef.current.scrollTop =
+      messagesContainerRef.current.scrollHeight;
+  };
 
-    return () => {
-      socket.off("newMessage", handleNewMessage);
-    };
-  }, [roomId, socket]);
+  const handleScroll = () => {
+    if (messagesContainerRef.current.scrollTop === 0 && hasMoreMessages) {
+      const lastMessageTimestamp = messages[0].timestamp;
+      fetchMessages(lastMessageTimestamp);
+    }
+  };
 
   const sendMessage = () => {
     if (socket && message.trim()) {
@@ -29,11 +56,31 @@ export default function ChatWindow({ user, roomId, socket }) {
         roomId: roomId, // Pass the roomId
         recipientId: user._id,
         message: message,
+        senderId: currentUser._id,
       };
       socket.emit("sendMessage", messageData);
       setMessage("");
     }
   };
+
+  useEffect(() => {
+    setMessage("");
+    setMessages([]);
+    socket.emit("joinRoom", roomId); // Join the private room
+    fetchMessages();
+    socket.on("newMessage", handleNewMessage);
+
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+    };
+  }, [roomId, socket]);
+
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop =
+        messagesContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   return (
     <div className="col-sm-6 bg-light sticky-top min-vh-100">
@@ -53,18 +100,27 @@ export default function ChatWindow({ user, roomId, socket }) {
             {user.fullName}
           </a>
         </div>
-        <div className="container bg-dark rounded m-2">
+        <div className="container rounded m-2">
           <div
+            ref={messagesContainerRef}
             className="overflow-auto p-2"
             style={{ width: "100%", height: "600px" }}
+            onScroll={handleScroll}
           >
             {messages.map((message, index) => (
-              <div className="d-block">
+              <div
+                key={index}
+                className={`d-block ${
+                  message.senderId === currentUser._id
+                    ? "d-flex justify-content-end"
+                    : "d-flex justify-content-start"
+                }`}
+              >
                 <span
-                  className={`p-2 mb-2 ${
-                    message.senderId === socket.id
-                      ? "mr-auto text-white"
-                      : "ml-auto text-white"
+                  className={`mb-2 rounded${
+                    message.senderId === currentUser._id
+                      ? "bg-primary"
+                      : "bg-secondary"
                   }`}
                 >
                   {message.message}
