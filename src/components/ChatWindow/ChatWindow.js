@@ -3,46 +3,25 @@ import { io } from "socket.io-client";
 import { faPaperPlane } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-export default function ChatWindow({ user, roomId }) {
+export default function ChatWindow({ user, roomId, socket }) {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
-  const [socket, setSocket] = useState(null);
-
-  const componentStyle = {
-    backgroundImage: `url(${require("../../assets/pngtree-watercolor-graffiti-brush-scribble-background-image_725792.jpeg")})`,
-    backgroundSize: "cover", // Adjust as needed
-    backgroundRepeat: "no-repeat", // Adjust as needed
-    backgroundPosition: "center", // Adjust as needed
-    padding: "20px",
-    color: "white",
-    borderRadius: "15px",
-  };
 
   useEffect(() => {
     setMessage("");
     setMessages([]);
-    const newSocket = io("http://localhost:5000");
-    newSocket.emit("joinRoom", roomId); // Join the private room
-    setSocket(newSocket);
+    socket.emit("joinRoom", roomId); // Join the private room
+
+    const handleNewMessage = (messageData) => {
+      setMessages((prevMessages) => [...prevMessages, messageData]);
+    };
+
+    socket.on("newMessage", handleNewMessage);
 
     return () => {
-      newSocket.disconnect();
+      socket.off("newMessage", handleNewMessage);
     };
-  }, [roomId]);
-
-  useEffect(() => {
-    if (socket) {
-      const handleNewMessage = (messageData) => {
-        setMessages((prevMessages) => [...prevMessages, messageData]);
-      };
-
-      socket.on("newMessage", handleNewMessage);
-
-      return () => {
-        socket.off("newMessage", handleNewMessage);
-      };
-    }
-  }, [socket]);
+  }, [roomId, socket]);
 
   const sendMessage = () => {
     if (socket && message.trim()) {

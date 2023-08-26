@@ -8,9 +8,11 @@ import { io } from "socket.io-client"; // Make sure you're importing 'io' from '
 import { fetchRoomId } from "../../services/homeService";
 
 export default function NewHome() {
+  const [socket, setSocket] = useState(null);
   const [showChatWindow, setShowChatWindow] = useState(false);
   const [chatWindowUser, setChatWindowUser] = useState([]);
   const [chatRoomId, setChatRoomId] = useState("");
+
   const handleToggleChatWindow = async (user) => {
     setShowChatWindow(true);
     setChatWindowUser(user);
@@ -26,14 +28,11 @@ export default function NewHome() {
   };
 
   useEffect(() => {
-    const socket = io("http://localhost:5000"); // Replace with your backend URL
-    socket.on("newMessage", (message) => {
-      console.log("New message received:", message);
-      // Update your UI or state to display the new message
-    });
+    const newSocket = io("http://localhost:5000"); // Replace with your backend URL
+    setSocket(newSocket);
 
     return () => {
-      socket.disconnect();
+      newSocket.disconnect();
     };
   }, []);
 
@@ -49,7 +48,11 @@ export default function NewHome() {
               <>
                 <ChatList handleToggleChatWindow={handleToggleChatWindow} />
                 {showChatWindow && (
-                  <ChatWindow user={chatWindowUser} roomId={chatRoomId} />
+                  <ChatWindow
+                    user={chatWindowUser}
+                    roomId={chatRoomId}
+                    socket={socket}
+                  />
                 )}
               </>
             }
