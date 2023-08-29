@@ -14,8 +14,6 @@ export default function AuthForm({ isSignUp }) {
     location: "",
   });
 
-  const { setCurrentUser } = useUserContext();
-
   const handleSignUp = async (e) => {
     e.preventDefault();
     console.log(userDetails);
@@ -24,7 +22,10 @@ export default function AuthForm({ isSignUp }) {
       if (response.status) {
         const verifyResponse = await verifyToken();
         if (verifyResponse.status) {
-          setCurrentUser(verifyResponse.user);
+          localStorage.setItem(
+            "userdetails",
+            JSON.stringify(verifyResponse.user)
+          );
           navigate("/home");
         } else {
           console.log("Token verification failed");
@@ -46,7 +47,10 @@ export default function AuthForm({ isSignUp }) {
       if (response.status) {
         const verifyResponse = await verifyToken();
         if (verifyResponse.status) {
-          setCurrentUser(verifyResponse.user);
+          localStorage.setItem(
+            "userdetails",
+            JSON.stringify(verifyResponse.user)
+          );
           navigate("/home");
         } else {
           console.log("Token verification failed");

@@ -44,7 +44,11 @@ export default function ChatWindow({ user, roomId, socket }) {
   };
 
   const handleScroll = () => {
-    if (messagesContainerRef.current.scrollTop === 0 && hasMoreMessages) {
+    if (
+      messagesContainerRef.current.scrollTop === 0 &&
+      hasMoreMessages &&
+      messages.length > 0
+    ) {
       const lastMessageTimestamp = messages[0].timestamp;
       fetchMessages(lastMessageTimestamp);
     }
@@ -62,6 +66,8 @@ export default function ChatWindow({ user, roomId, socket }) {
       setMessage("");
     }
   };
+
+  console.log(messages);
 
   useEffect(() => {
     setMessage("");

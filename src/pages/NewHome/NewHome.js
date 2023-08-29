@@ -6,12 +6,14 @@ import ChatWindow from "../../components/ChatWindow/ChatWindow";
 import Discover from "../../components/Discover/Discover";
 import { io } from "socket.io-client"; // Make sure you're importing 'io' from 'socket.io-client'
 import { fetchRoomId } from "../../services/homeService";
+import { useUserContext } from "../../UserContext";
 
 export default function NewHome() {
   const [socket, setSocket] = useState(null);
   const [showChatWindow, setShowChatWindow] = useState(false);
   const [chatWindowUser, setChatWindowUser] = useState([]);
   const [chatRoomId, setChatRoomId] = useState("");
+  const { setCurrentUser } = useUserContext();
 
   const handleToggleChatWindow = async (user) => {
     try {
@@ -27,6 +29,7 @@ export default function NewHome() {
   };
 
   useEffect(() => {
+    setCurrentUser(JSON.parse(localStorage.getItem("userdetails")));
     const newSocket = io("http://localhost:5000"); // Replace with your backend URL
     setSocket(newSocket);
 
